@@ -35,36 +35,6 @@ void setup() {
 }
 
 void loop() {
-    // subtract the last reading:
-  total= total - readings[index];         
-  // read from the sensor:  
-  readings[index] = analogRead(pot_pin); 
-  // add the reading to the total:
-  total= total + readings[index];       
-  // advance to the next position in the array:  
-  index = index + 1;                    
-
-  // if we're at the end of the array...
-  if (index >= numReadings)              
-    // ...wrap around to the beginning: 
-    index = 0;                           
-
-  // calculate the average:
-  pot_value = total / numReadings;  
-
-  
-  if (pot_value > past_pot) {
-    myMotor->run(FORWARD);
-    velocity = pot_value*(255.0/1023.0);
-  }
-  else if (pot_value < past_pot) {
-    myMotor->run(BACKWARD);
-    velocity = abs(pot_value*(255.0/1023.0)-255.0);
-  }
-  else {
-    myMotor->run(RELEASE);
-  }
- 
   myMotor->setSpeed(velocity);
   past_pot = pot_value;
   
@@ -75,8 +45,35 @@ void loop() {
   }
   else
   {
-    myMotor->setSpeed(150);
-    myMotor->run(FORWARD);
+          // subtract the last reading:
+        total= total - readings[index];         
+        // read from the sensor:  
+        readings[index] = analogRead(pot_pin); 
+        // add the reading to the total:
+        total= total + readings[index];       
+        // advance to the next position in the array:  
+        index = index + 1;                    
+      
+        // if we're at the end of the array...
+        if (index >= numReadings)              
+          // ...wrap around to the beginning: 
+          index = 0;                           
+      
+        // calculate the average:
+        pot_value = total / numReadings;  
+      
+        
+        if (pot_value > past_pot) {
+          myMotor->run(FORWARD);
+          velocity = pot_value*(255.0/1023.0);
+        }
+        else if (pot_value < past_pot) {
+          myMotor->run(BACKWARD);
+          velocity = abs(pot_value*(255.0/1023.0)-255.0);
+        }
+        else {
+          myMotor->run(RELEASE);
+        }
   }
  
   delay(20);
