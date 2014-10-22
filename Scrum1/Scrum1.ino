@@ -7,6 +7,7 @@ int i;
 unsigned long testing;
 float pot_value;
 int pot_pin = 0;
+int buttonpin= 8; 
 int past_pot = 0;
 int velocity = 0;
 
@@ -26,6 +27,7 @@ void setup() {
   AFMS.begin();
   
   pinMode(pot_pin, OUTPUT);
+  pinMode(buttonPin, INPUT);
   
   for (int thisReading = 0; thisReading < numReadings; thisReading++)
     readings[thisReading] = 0;   
@@ -66,7 +68,17 @@ void loop() {
   myMotor->setSpeed(velocity);
   past_pot = pot_value;
   
-  
+  buttonState = digitalRead(buttonPin);
+  if(buttonState == HIGH)
+  {
+    myMotor->run(RELEASE);
+  }
+  else
+  {
+    myMotor->setSpeed(150);
+    myMotor->run(FORWARD);
+  }
+ 
   delay(20);
   
 }
