@@ -7,7 +7,8 @@ int i;
 unsigned long testing;
 float pot_value;
 int pot_pin = A0;
-int grip_pin= 6; 
+int buttonpin = 6;
+int grip_pin= A2; //should be an analog pin
 int past_pot = 0;
 int velocity = 0;
 int grip_threshold = 700; //threshold for secure grip, on scale 0 - 1023
@@ -35,6 +36,7 @@ void setup() {
   AFMS.begin();
   
   pinMode(pot_pin, INPUT);
+  //pinMode(buttonpin, INPUT);
   pinMode(grip_pin, INPUT);
   
   for (int thisReading = 0; thisReading < numReadings; thisReading++)
