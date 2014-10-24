@@ -7,9 +7,10 @@ int i;
 unsigned long testing;
 float pot_value;
 int pot_pin = A0;
-int buttonpin= 6; 
+int grip_pin= 6; 
 int past_pot = 0;
 int velocity = 0;
+int grip_threshold = 700; //threshold for secure grip, on scale 0 - 1023
 boolean buttonState = LOW;
 
 const int numReadings = 10;
@@ -34,7 +35,7 @@ void setup() {
   AFMS.begin();
   
   pinMode(pot_pin, INPUT);
-  pinMode(buttonpin, INPUT);
+  pinMode(grip_pin, INPUT);
   
   for (int thisReading = 0; thisReading < numReadings; thisReading++)
     readings[thisReading] = 0;   
@@ -44,7 +45,9 @@ void setup() {
 void loop() {
   
       //reading button pushes
-  int push = digitalRead(buttonpin);
+  //int push = digitalRead(buttonpin);
+  int grip = analogRead(grip_pin);
+  boolean push = analog_to_digital(grip);  
   if (push != prevState) { //want to make sure it isn't noise
     lastDebounceTime = millis();
   }
@@ -74,7 +77,8 @@ void loop() {
   // calculate the average:
   pot_value = total / numReadings;  
   
-  buttonState = digitalRead(buttonpin);
+  int grip = analogRead(grip_pin);
+  boolean buttonState = analog_to_digital(grip); 
   if(buttonState == HIGH)
   {
     myMotor->run(RELEASE);
@@ -98,3 +102,12 @@ void loop() {
   past_pot = pot_value;
   
 }
+
+boolean analog_to_digital(grip_signal){
+    if (grip_signal > grip_threshold){
+    return HIGH;
+  }else{
+    return LOW;
+  }
+
+]
