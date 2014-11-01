@@ -44,3 +44,18 @@ int c_avg = 0;
 void setup()
 {
   Serial.begin(9600); //for debugging
+  cuffservo.attach(9);
+  gripservo.attach(10);
+  
+  for (int thisReading=0; thisReading < numReadings; thisReading++)
+    joint_readings[thisReading] = 0;
+    a_readings[thisReading] = 0;
+    b_readings[thisReading] = 0;
+    c_readings[thisReading] = 0;
+}
+
+/***********MAIN LOOP****************/
+void loop()
+{
+  
+}
