@@ -62,6 +62,8 @@ void loop()
 
 /***********FINGER SUBLOOP***********/
 //If readings > some threshold (50?) for 15+ readings, allow as real feedback to cinching servo */
-bool realFeedback(signal){
+int fingerFeedback(signal){
+	//check if not noise
 
+	//if not noise, send to smoothing
 }
