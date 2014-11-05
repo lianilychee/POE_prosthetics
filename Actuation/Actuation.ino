@@ -1,6 +1,7 @@
 // Sweep
 // by BARRAGAN <http://barraganstudio.com> 
 // This example code is in the public domain.
+// Test sketch to actuate loop servo from 0 to 180.
 
 
 #include <Servo.h> 
