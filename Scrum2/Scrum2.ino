@@ -36,6 +36,9 @@ boolean grab = 0;
 boolean hold = 0;
 boolean reelees = 0;
 
+int looper = 0;
+int lastGrip;
+
 /************SETUP*****************/ 
 void setup() 
 { 
@@ -94,16 +97,16 @@ void loop()
   else if (lift) {
     lift();
   }
-  else if (reach & !hold) {
+  else if (reach && !hold) {
     grab();
   }
   else if (hold) {
     hold();
   }
-  else if (reach & hold) {
+  else if (reach && hold) {
     reelees();
   }
-  else if (reelees & reach){
+  else if (reelees && reach){
     relaxed = 1;
   }
 } 
@@ -111,6 +114,7 @@ void loop()
 void relax() {
   if (bendAverage < 5) {
     relaxed = 1;
+    reach = 0;
     gripServo.write(90);
   }
   else {
@@ -131,4 +135,44 @@ void lift() {
   cuffServo.write(0);
 }
 /***********GRAB LOOP****************/
-
+void grab() {
+  if (gripAverage < 300 && bendAverage < 5) {
+    hold = 0;
+    reach = 1;
+    cuffServo.write(grip);
+    gripServo.write(looper);
+    looper = looper + 1;
+    lastGrip = grip;
+  }
+  else {
+    gripServo.write(looper);
+    cuffServo.write(lastGrip);
+    hold = 1;
+    reach = 0;
+  }
+}
+/**************HOLD LOOP*************/
+void hold() {
+  if (bendAverage < 5) {
+    reach = 1;
+    hold = 1;
+  }
+}
+/**************REELEES LOOP*********/
+void reelees() {
+  if (looper >= 0) {
+    gripServo.write(looper);
+    cuffServo.write(lastGrip);
+    lastGrip = grip;
+    looper = looper - 1;
+  }
+  else {
+    hold = 0;
+    reach = 1;
+    lastGrip = 0;
+    looper = 0;
+    cuffServo.write(lastGrip);
+    gripServo.write(looper);
+  }
+}
+    
