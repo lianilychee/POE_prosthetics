@@ -28,6 +28,14 @@ int bendIndex = 0;
 int bendTotal = 0;
 int bendAverage = 0;
 
+//Variables indicating state
+boolean relaxed = 0;
+boolean lift = 0;
+boolean reach = 0;
+boolean grab = 0;
+boolean hold = 0;
+boolean reelees = 0;
+
 /************SETUP*****************/ 
 void setup() 
 { 
@@ -39,6 +47,8 @@ void setup()
     gripReadings[thisReading] = 0;
     bendReadings[thisReading] = 0;
   }
+  
+  relaxed = 1;
 } 
 
 /************MAIN LOOP*****************/ 
@@ -71,10 +81,54 @@ void loop()
   
   //Scale the averages to have a sensical input for the servos
   grip = map(gripAverage, 0, 300, 0, 179);     // Grip bounds may need to be adjusted (this is where calibration tests will be useful!) 
-  cuffServo.write(grip);                  // sets the servo position according to the scaled value 
+  //cuffServo.write(grip);                  // sets the servo position according to the scaled value 
   
   bend = map(bendAverage, 0, 1023, 0, 179);     // Probably also needs to be adjusted, scale it to use it with the servo (value between 0 and 180) 
-  gripServo.write(bend);                  // sets the servo position according to the scaled value 
+  //gripServo.write(bend);                  // sets the servo position according to the scaled value 
   
-  delay(15);                           // waits for the servo to get there 
+  //delay(15);                           // waits for the servo to get there 
+  
+  if (relaxed) {
+    relax(); 
+  }
+  else if (lift) {
+    lift();
+  }
+  else if (reach & !hold) {
+    grab();
+  }
+  else if (hold) {
+    hold();
+  }
+  else if (reach & hold) {
+    reelees();
+  }
+  else if (reelees & reach){
+    relaxed = 1;
+  }
 } 
+/****************RELAX LOOP*************/
+void relax() {
+  if (bendAverage < 5) {
+    relaxed = 1;
+    gripServo.write(90);
+  }
+  else {
+    relaxed = 0;
+    lift = 1;
+    gripServo.write(0);
+  }
+  cuffServo.write(0);
+}
+/**************LIFT LOOP***************/
+void lift() {
+ if (bendAverage < 5) {
+  lift = 0;
+  reach = 1;
+  hold = 0;
+ }
+  gripServo.write(0);
+  cuffServo.write(0);
+}
+/***********GRAB LOOP****************/
+
