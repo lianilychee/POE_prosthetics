@@ -11,6 +11,17 @@ Last Update: November 1, 2014
 Servo cuffservo;
 Servo gripservo;
 
+//State variables
+// 1 = rest, 2 = lift, 3 = reach, 4 = grab, 5 = hold, 6 = release
+int state = 1; 
+
+//Assign pins
+int gripSensor = A5; 
+
+//State Parameters
+int relaxedAngle = 90; //0-180 extremes, 90 = no movement
+int gripSpeed = 1;
+
 //Variables for raw input
 int joint_pin = 0;
 int angle;
@@ -42,12 +53,14 @@ int a_avg = 0;
 int b_avg = 0;
 int c_avg = 0;
 
+
+
 /***********SETUP****************/
 void setup()
 {
   Serial.begin(9600); //for debugging
-  cuffservo.attach(9);
-  gripservo.attach(10);
+  cuffservo.attach(9, 1000, 2000); //assume 0-180 servo, 1000/2000 are the mix/max PWM
+  gripservo.attach(10, 1000, 2000); //assume 0-180 servo
   
   for (int thisReading=0; thisReading < numReadings; thisReading++)
     joint_readings[thisReading] = 0;
@@ -73,6 +86,7 @@ void loop()
     if (not extended, held) -> lift (note: no actuation)
     if (extended, held) -> release
   Call next state*/
+  gripservo::refresh //Do we need this? 
 }
 
 /***********FINGER SUBLOOP***********/
@@ -111,3 +125,49 @@ exit function
 		
 	release()
 		set finger servo: increment to open*/
+
+void relax(){
+	cuffservo.write(relaxedAngle);
+	gripservo.write(relaxedAngle);
+	//TODO: Check if this will move servos simultaneously
+	stage = 1;
+}
+
+void lift(){
+	stage = 2;
+}
+
+void reach(){
+	stage = 3;
+	for(int p= relaxedAngle; p<180; p++){ //may be p > 0 depending
+		gripservo.write(p*gripSpeed);
+	}
+}
+
+void grab(){
+	stage = 4;
+	//TODO: read from accelerometer/ pass in data to variable accel, replace someThreshold with number
+	if(accelNow- accelPrev > some_Threshold){
+		stopSig = true;
+	}
+	while(!stopSig || currentPos > safetyThreshold){ //may be < depending
+		currentPos = gripservo.read();
+		gripservo.write(currentPos + 1) //may be -1 depending
+		gripRead = analogRead(gripSensor);
+		cuffservo.write(map(gripRead, 0, 500, 90, 180)) // scale mapping parameters as necessary
+	}
+	gripStop = gripservo.read();
+
+}
+
+void hold(){
+	//TODO: Check for trigger to release
+	gripservo.write(gripStop);
+	stage = 5;
+}
+
+void release(){
+	for(int r= gripStop; r>90; r--){ //may be p > 0 depending
+		gripservo.write(r*gripSpeed);
+	}
+}
