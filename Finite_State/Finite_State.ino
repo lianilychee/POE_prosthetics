@@ -136,12 +136,12 @@ void arm_lift() {
   //If arm bent, then lifting forearm.  If we extend, then we're reaching
  if (bendAverage > 250) {
   lift = 1;
-  gripServo.write(90);
+  gripServo.write(0);
  }
  else {
    lift = 0;
+   grabbing = !grabbing;
    reach = 1;
-   gripServo.write(0);
  }
   cuffServo.write(0);
   delay(15);
@@ -149,21 +149,21 @@ void arm_lift() {
 /***********GRAB LOOP****************/
 void grab() {
   //If we're not maxed out in force, or over our movement range and arm is extended, grip!
-  if (gripAverage < 300 && bendAverage < 250 && looper < 180) {
+  if (gripAverage < 300 && bendAverage < 500 && looper < 5000) {
     grabbing = 1;
     reach = 0;
     cuffServo.write(grip);
-    gripServo.write(looper);
-    looper = round(looper + 0.5);
+    gripServo.write(map(looper, 0, 5000, 0, 179));
+    looper = looper + 1;
     lastGrip = grip;
     delay(15);
   }
   else {
-    gripServo.write(looper);
+    gripServo.write(map(looper, 0, 5000, 0, 179));
     cuffServo.write(lastGrip);
     hold = 1;
     grabbing = 0;
-    delay(1000); //leave time for user to move to comfortable holding position
+    delay(5000); //leave time for user to move to comfortable holding position
   }
 }
 /**************HOLD LOOP*************/
@@ -181,11 +181,11 @@ void hold_stuff() {
 /**************REELEES LOOP*********/
 void reelees_now() {
   //when releasing, release down to 0.  Then reset.
-  if (looper >= 0) {
-    gripServo.write(looper);
+  if (looper > 0) {
+    gripServo.write(map(looper, 0, 5000, 0, 179));
     cuffServo.write(lastGrip);
     lastGrip = grip;
-    looper = round(looper - 0.5);
+    looper = looper - 1;
     delay(15);
   }
   else {
