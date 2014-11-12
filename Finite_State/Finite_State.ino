@@ -1,193 +1,205 @@
-/* Code for ICFProsthetics 
-Written by: Ellie Funkhouser, Liani Lye, Victoria Preston, and Celine Ta
-Last Update: November 1, 2014
-*/
+// by Victoria Preston for POE Project ICF Prosthetics
 
-/***********LIBRARIES****************/
-#include <Servo.h>
+/************LIBRARIES*****************/
+#include <Servo.h> 
 
-/***********VARIABLES****************/
-//Assign Servos
-Servo cuffservo;
-Servo gripservo;
 
-//State variables
-// 1 = rest, 2 = lift, 3 = reach, 4 = grab, 5 = hold, 6 = release
-int state = 1; 
+/************VARIABLES*****************/
+//Variables for control 
+Servo cuffServo;  // create servo object to control a servo 
+Servo gripServo;
 
-//Assign pins
-int gripSensor = A5; 
+//Variables for raw input 
+int fingerpin = 0; //analog pin used for a single finger sensor
+int grip; //This is for the pressure sensors
+int potpin = 1;  // analog pin used to connect the potentiometer
+int bend;    // This is for the elbow potentiometer 
 
-//State Parameters
-int relaxedAngle = 90; //0-180 extremes, 90 = no movement
-int gripSpeed = 1;
-
-//Variables for raw input
-int joint_pin = 0;
-int angle;
-int finger_a = 1;
-int a;
-int finger_b = 2;
-int b;
-int finger_c = 3;
-int c;
-//TODO Accelerometer Data
-//TODO Dtate Booleans
-
-//Variables for smoothing
+//Vairables for smoothing
 const int numReadings = 10;
-int index = 0;
 
-int joint_readings[numReadings];
-int a_readings[numReadings];
-int b_readings[numReadings];
-int c_readings[numReadings];
+int gripReadings[numReadings];
+int gripIndex = 0;
+int gripTotal = 0;
+int gripAverage = 0;
 
-int joint_total = 0;
-int a_total = 0;
-int b_total = 0;
-int c_total = 0;
+int bendReadings[numReadings];
+int bendIndex = 0;
+int bendTotal = 0;
+int bendAverage = 0;
 
-int joint_avg = 0;
-int a_avg = 0;
-int b_avg = 0;
-int c_avg = 0;
+//Variables indicating state
+boolean relaxed = 0;
+boolean lift = 0;
+boolean reach = 0;
+boolean grabbing = 0;
+boolean hold = 0;
+boolean reelees = 0;
 
+//Tracking variables
+int looper = 0;
+int lastGrip;
 
-
-/***********SETUP****************/
-void setup()
-{
-  Serial.begin(9600); //for debugging
-  cuffservo.attach(9, 1000, 2000); //assume 0-180 servo, 1000/2000 are the mix/max PWM
-  gripservo.attach(10, 1000, 2000); //assume 0-180 servo
+/************SETUP*****************/ 
+void setup() 
+{ 
+  Serial.begin(9600); // for debugging in terminal
+  cuffServo.attach(9);  // attaches the servo on pin 9 to the servo object 
+  gripServo.attach(10);
   
-  for (int thisReading=0; thisReading < numReadings; thisReading++)
-    joint_readings[thisReading] = 0;
-    a_readings[thisReading] = 0;
-    b_readings[thisReading] = 0;
-    c_readings[thisReading] = 0;
-      
-  //TODO Relax the Actuators?
-  //TODO Calibrate the Accel?
-}
+  for (int thisReading=0; thisReading < numReadings; thisReading++){
+    gripReadings[thisReading] = 0;
+    bendReadings[thisReading] = 0;
+  }
+  
+  relaxed = 1;
+} 
 
-/***********MAIN LOOP****************/
-void loop()
-{
-  // 1 = rest, 2 = lift, 3 = reach, 4 = grab, 5 = hold, 6 = release
-  if (state = 1) {
-    relax();
+/************MAIN LOOP*****************/ 
+void loop() 
+{ 
+  grip = analogRead(fingerpin);
+  bend = analogRead(potpin);            // reads the value of the potentiometer (value between 0 and 1023) 
+  
+  //Find the rolling average for the sensors (smoothing)
+  bendTotal = bendTotal-bendReadings[bendIndex];
+  bendReadings[bendIndex] = bend;
+  bendTotal = bendTotal + bendReadings[bendIndex];
+  bendIndex = bendIndex + 1;
+  
+  gripTotal = gripTotal-gripReadings[gripIndex];
+  gripReadings[gripIndex] = grip;
+  gripTotal = gripTotal + gripReadings[gripIndex];
+  gripIndex = gripIndex + 1;
+  
+  if (bendIndex >= numReadings)
+    bendIndex = 0;
+    
+  if (gripIndex >= numReadings)
+    gripIndex = 0;
+  
+  bendAverage = bendTotal/numReadings;
+  gripAverage = gripTotal/numReadings;
+  //Serial.println(bendAverage);
+  //Serial.println(gripAverage);
+  
+  //Scale the averages to have a sensical input for the servos
+  grip = map(gripAverage, 0, 300, 0, 179);     // Grip bounds may need to be adjusted (this is where calibration tests will be useful!) 
+  //cuffServo.write(grip);                  // sets the servo position according to the scaled value 
+  
+  bend = map(bendAverage, 0, 1023, 0, 179);     // Probably also needs to be adjusted, scale it to use it with the servo (value between 0 and 180) 
+  //gripServo.write(bend);                  // sets the servo position according to the scaled value 
+    
+  if (relaxed) {
+    relax(); 
+    Serial.println("relaxed");
   }
-  else if (state = 2) {
-    lift();
+  else if (lift) {
+    arm_lift();
+    Serial.println("lift");
   }
-  else if (state = 3) {
-    reach();
-  }
-  else if (state = 4) {
+  else if (grabbing) {
     grab();
+    Serial.println("grab");
   }
-  else if (state = 5) {
-    hold ();
+  else if (hold) {
+    hold_stuff();
+    Serial.println("hold");
   }
-  else if (state = 6) {
-    reelees();
+  else if (reelees) {
+    reelees_now();
+    Serial.println("release");
   }
-     
-  //TODO Add Controller If-Statement
-  /* Read in State
-  Determine Next State
-    if(relaxed) -> lift
-    if (lift) -> reach
-    if (reach, no hold) -> grab  
-    if (reach, held) -> release
-    if(grab) -> hold
-    if (not extended, held) -> lift (note: no actuation)
-    if (extended, held) -> release
-  Call next state*/
-  //gripservo::refresh //Do we need this? 
+
+  
+
+} 
+/****************RELAX LOOP*************/
+void relax() {
+  //If arm is by our side, relax.  If it moves, its a lift!
+  if (bendAverage < 250) {               
+    relaxed = 1;
+    gripServo.write(90);                 //'Relaxed' position of somewhat closed
+    delay(15);                           // waits for the servo to get there 
+  }
+  else {
+    relaxed = 0;
+    lift = 1;
+    gripServo.write(0);
+    delay(15);
+  }
+  cuffServo.write(0);
+  delay(15);
 }
-
-/***********FINGER SUBLOOP***********/
-//If readings > some threshold (50?) for 15+ readings, allow as real feedback to cinching servo */
-int fingerFeedback(signal){
-	//check if not noise
-
-	//if not noise, send to smoothing
+/**************LIFT LOOP***************/
+void arm_lift() {
+  //If arm bent, then lifting forearm.  If we extend, then we're reaching
+ if (bendAverage > 250) {
+  lift = 1;
+  gripServo.write(90);
+ }
+ else {
+   lift = 0;
+   reach = 1;
+   gripServo.write(0);
+ }
+  cuffServo.write(0);
+  delay(15);
 }
-
-void relax(){
-	cuffservo.write(relaxedAngle);
-	gripservo.write(relaxedAngle);
-	//TODO: Check if this will move servos simultaneously
-	stage = 1;
+/***********GRAB LOOP****************/
+void grab() {
+  //If we're not maxed out in force, or over our movement range and arm is extended, grip!
+  if (gripAverage < 300 && bendAverage < 250 && looper < 180) {
+    grabbing = 1;
+    reach = 0;
+    cuffServo.write(grip);
+    gripServo.write(looper);
+    looper = round(looper + 0.5);
+    lastGrip = grip;
+    delay(15);
+  }
+  else {
+    gripServo.write(looper);
+    cuffServo.write(lastGrip);
+    hold = 1;
+    grabbing = 0;
+    delay(1000); //leave time for user to move to comfortable holding position
+  }
 }
-
-void lift(){
-	stage = 2;
+/**************HOLD LOOP*************/
+void hold_stuff() {
+  //if extend, we're releasing
+  if (bendAverage > 250) {
+    reelees = 0;
+    hold = 1;
+  }
+  else {
+    reelees = 1;
+    hold = 0;
+  }
 }
-
-void reach(){
-	stage = 3;
-	for(int p= relaxedAngle; p<180; p++){ //may be p > 0 depending
-		gripservo.write(p*gripSpeed);
-	}
+/**************REELEES LOOP*********/
+void reelees_now() {
+  //when releasing, release down to 0.  Then reset.
+  if (looper >= 0) {
+    gripServo.write(looper);
+    cuffServo.write(lastGrip);
+    lastGrip = grip;
+    looper = round(looper - 0.5);
+    delay(15);
+  }
+  else {
+    relaxed = 1;
+    hold = 0;
+    reach = 0;
+    lastGrip = 0;
+    looper = 0;
+    grabbing = 0;
+    reelees = 0;
+    cuffServo.write(lastGrip);
+    gripServo.write(looper);
+    Serial.println("reset");
+    delay(15);
+  }
 }
-
-void grab(){
-	stage = 4;
-	//TODO: read from accelerometer/ pass in data to variable accel, replace someThreshold with number
-	if(accelNow- accelPrev > some_Threshold){
-		stopSig = true;
-	}
-	while(!stopSig || currentPos > safetyThreshold){ //may be < depending
-		currentPos = gripservo.read();
-		gripservo.write(currentPos + 1) //may be -1 depending
-		gripRead = analogRead(gripSensor);
-		cuffservo.write(map(gripRead, 0, 500, 90, 180)) // scale mapping parameters as necessary
-	}
-	gripStop = gripservo.read();
-
-}
-
-void hold(){
-	//TODO: Check for trigger to release
-	gripservo.write(gripStop);
-	stage = 5;
-}
-
-void reelees(){
-	for(int r= gripStop; r>90; r--){ //may be p > 0 depending
-		gripservo.write(r*gripSpeed);
-	}
-}
-
-/*Actuation commands:
-relax() -> gripper (semi)
-
-
-lift()
-
-
-reach() -> gripper (open)
-	set finger servo: increment position to full open
-
-grab()
-set finger servo: increment position // see Actuator sketch for example
-
-// now start letting the person know that we’ve grabbed an object
-while pressure sensor reads some value
-	increment cuff servo
-	// got to do mapping of pressure sensor to cuff servo position
-
-// If we move the lower arm or if the servo is over torqued, exit
-if (angle shift || finger_pressure > threshold)
-exit function
-
-	
-	hold()
-		finger servo position = previous finger servo position
-		
-	release()
-		set finger servo: increment to open*/
+    

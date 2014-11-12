@@ -32,9 +32,11 @@ int bendAverage = 0;
 boolean relaxed = 0;
 boolean lift = 0;
 boolean reach = 0;
+boolean grabbing = 0;
 boolean hold = 0;
 boolean reelees = 0;
 
+//Tracking variables
 int looper = 0;
 int lastGrip;
 
@@ -96,7 +98,7 @@ void loop()
     arm_lift();
     Serial.println("lift");
   }
-  else if (reach && !hold) {
+  else if (grabbing) {
     grab();
     Serial.println("grab");
   }
@@ -114,9 +116,10 @@ void loop()
 } 
 /****************RELAX LOOP*************/
 void relax() {
-  if (bendAverage < 250) {
+  //If arm is by our side, relax.  If it moves, its a lift!
+  if (bendAverage < 250) {               
     relaxed = 1;
-    gripServo.write(90);
+    gripServo.write(90);                 //'Relaxed' position of somewhat closed
     delay(15);                           // waits for the servo to get there 
   }
   else {
@@ -130,24 +133,28 @@ void relax() {
 }
 /**************LIFT LOOP***************/
 void arm_lift() {
+  //If arm bent, then lifting forearm.  If we extend, then we're reaching
  if (bendAverage > 250) {
   lift = 1;
+  gripServo.write(90);
  }
  else {
    lift = 0;
    reach = 1;
+   gripServo.write(0);
  }
-  gripServo.write(0);
   cuffServo.write(0);
   delay(15);
 }
 /***********GRAB LOOP****************/
 void grab() {
+  //If we're not maxed out in force, or over our movement range and arm is extended, grip!
   if (gripAverage < 300 && bendAverage < 250 && looper < 180) {
-    reach = 1;
+    grabbing = 1;
+    reach = 0;
     cuffServo.write(grip);
     gripServo.write(looper);
-    looper = looper + 0.5;
+    looper = round(looper + 0.5);
     lastGrip = grip;
     delay(15);
   }
@@ -155,13 +162,14 @@ void grab() {
     gripServo.write(looper);
     cuffServo.write(lastGrip);
     hold = 1;
-    reach = 0;
-    delay(15);
+    grabbing = 0;
+    delay(1000); //leave time for user to move to comfortable holding position
   }
 }
 /**************HOLD LOOP*************/
 void hold_stuff() {
-  if (bendAverage < 700) {
+  //if extend, we're releasing
+  if (bendAverage > 250) {
     reelees = 0;
     hold = 1;
   }
@@ -172,11 +180,12 @@ void hold_stuff() {
 }
 /**************REELEES LOOP*********/
 void reelees_now() {
+  //when releasing, release down to 0.  Then reset.
   if (looper >= 0) {
     gripServo.write(looper);
     cuffServo.write(lastGrip);
     lastGrip = grip;
-    looper = looper - 1;
+    looper = round(looper - 0.5);
     delay(15);
   }
   else {
@@ -185,6 +194,7 @@ void reelees_now() {
     reach = 0;
     lastGrip = 0;
     looper = 0;
+    grabbing = 0;
     reelees = 0;
     cuffServo.write(lastGrip);
     gripServo.write(looper);
