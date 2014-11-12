@@ -630,7 +630,6 @@ void setup()
   int error;
   uint8_t c;
 
-
   Serial.begin(9600);
   Serial.println(F("InvenSense MPU-6050"));
   Serial.println(F("June 2012"));
@@ -638,30 +637,19 @@ void setup()
   // Initialize the 'Wire' class for the I2C-bus.
   Wire.begin();
 
-
-  // default at power-up:
-  //    Gyro at 250 degrees second
-  //    Acceleration at 2g
-  //    Clock source at internal 8MHz
-  //    The device is in sleep mode.
-  //
-
   error = MPU6050_read (MPU6050_WHO_AM_I, &c, 1);
   Serial.print(F("WHO_AM_I : "));
   Serial.print(c,HEX);
   Serial.print(F(", error = "));
   Serial.println(error,DEC);
 
-  // According to the datasheet, the 'sleep' bit
-  // should read a '1'.
-  // That bit has to be cleared, since the sensor
-  // is in sleep mode at power-up. 
+  // According to the datasheet, the 'sleep' bit should read a '1'.
+  // That bit has to be cleared, since the sensor is in sleep mode at power-up. 
   error = MPU6050_read (MPU6050_PWR_MGMT_1, &c, 1);
   Serial.print(F("PWR_MGMT_1 : "));
   Serial.print(c,HEX);
   Serial.print(F(", error = "));
   Serial.println(error,DEC);
-
 
   // Clear the 'sleep' bit to start the sensor.
   MPU6050_write_reg (MPU6050_PWR_MGMT_1, 0);
@@ -673,7 +661,6 @@ void loop()
   int error;
   double dT;
   accel_t_gyro_union accel_t_gyro;
-
 
   Serial.println(F(""));
   Serial.println(F("MPU-6050"));
@@ -714,20 +701,6 @@ void loop()
   Serial.print(F(", "));
   Serial.print(accel_t_gyro.value.z_accel, DEC);
   Serial.println(F(""));
-
-
-  // The temperature sensor is -40 to +85 degrees Celsius.
-  // It is a signed integer.
-  // According to the datasheet: 
-  //   340 per degrees Celsius, -512 at 35 degrees.
-  // At 0 degrees: -512 - (340 * 35) = -12412
-
-  Serial.print(F("temperature: "));
-  dT = ( (double) accel_t_gyro.value.temperature + 12412.0) / 340.0;
-  Serial.print(dT, 3);
-  Serial.print(F(" degrees Celsius"));
-  Serial.println(F(""));
-
 
   // Print the raw gyro values.
 
