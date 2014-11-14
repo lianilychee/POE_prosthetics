@@ -3,7 +3,6 @@
 /************LIBRARIES*****************/
 #include <Servo.h> 
 
-
 /************VARIABLES*****************/
 //Variables for control 
 Servo cuffServo;  // create servo object to control a servo 
@@ -81,7 +80,7 @@ void loop()
   bendAverage = bendTotal/numReadings;
   gripAverage = gripTotal/numReadings;
   //Serial.println(bendAverage);
-  //Serial.println(gripAverage);
+  Serial.println(gripAverage);
   
   //Scale the averages to have a sensical input for the servos
   grip = map(gripAverage, 0, 300, 0, 179);     // Grip bounds may need to be adjusted (this is where calibration tests will be useful!) 
@@ -110,14 +109,11 @@ void loop()
     reelees_now();
     Serial.println("release");
   }
-
-  
-
 } 
 /****************RELAX LOOP*************/
 void relax() {
   //If arm is by our side, relax.  If it moves, its a lift!
-  if (bendAverage < 250) {               
+  if (bendAverage < 300) {               
     relaxed = 1;
     gripServo.write(90);                 //'Relaxed' position of somewhat closed
     delay(15);                           // waits for the servo to get there 
@@ -134,7 +130,7 @@ void relax() {
 /**************LIFT LOOP***************/
 void arm_lift() {
   //If arm bent, then lifting forearm.  If we extend, then we're reaching
- if (bendAverage > 250) {
+ if (bendAverage > 300) {
   lift = 1;
   gripServo.write(0);
  }
@@ -149,7 +145,7 @@ void arm_lift() {
 /***********GRAB LOOP****************/
 void grab() {
   //If we're not maxed out in force, or over our movement range and arm is extended, grip!
-  if (gripAverage < 300 && bendAverage < 500 && looper < 5000) {
+  if (gripAverage < 300 && bendAverage < 400 && looper < 5000) {
     grabbing = 1;
     reach = 0;
     cuffServo.write(grip);
@@ -169,7 +165,7 @@ void grab() {
 /**************HOLD LOOP*************/
 void hold_stuff() {
   //if extend, we're releasing
-  if (bendAverage > 250) {
+  if (bendAverage > 300) {
     reelees = 0;
     hold = 1;
   }
