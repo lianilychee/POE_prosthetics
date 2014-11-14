@@ -33,9 +33,6 @@ int16_t gx, gy, gz;
 
 // the setup routine runs once when you press reset:
 void setup(){
-  //variables
-    
-  // initialize serial communication at 9600 bits per second:
   Serial.begin(9600);
   pinMode(2, INPUT);
 
@@ -81,20 +78,33 @@ void setup(){
     Serial.print(accelgyro.getYGyroOffset()); Serial.print("\t"); // 0
     Serial.print(accelgyro.getZGyroOffset()); Serial.print("\t"); // 0
     Serial.print("\n");
-    */
-  
+    */ 
 }
 
 //Main loop ---------------------------------------------------------------------------------------------------------------------
 // the loop routine runs over and over again forever:
 void loop() {
   accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-  Serial.print(ax);
-  Serial.print("; ");
-  Serial.print(ay);
-  Serial.print("; ");
-  Serial.print(az);
-  Serial.println("");
-  delay(1000);
+//  Serial.print(ax);
+//  Serial.print("; ");
+//  Serial.print(ay);
+//  Serial.print("; ");
+//  Serial.print(az);
+//  Serial.println("");
+//  delay(1000);
+  
+  
+  // X DIRECTION ACCELERATION; weird because of gravity
+  if (ax > 15064 && ax < 19064) { Serial.println("x at standstill"); }
+  else { Serial.println("x MOVING"); }
+  
+  // Y DIRECTION ACCELERATION
+  if (ay > -636 && ay < 363) { Serial.println("y at standstill"); }
+  else { Serial.println("y MOVING"); }
+  
+  // Z DIRECTION ACCELERATION
+  if (az > -5181 && az < -4181) { Serial.println("z at standstill"); }
+  else { Serial.println("z MOVING"); }
+    
 }
 
