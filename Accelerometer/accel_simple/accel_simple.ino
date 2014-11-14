@@ -10,7 +10,7 @@ int16_t gx, gy, gz;
 
 //Servo myservo;
 
-int val;
+int yVal;
 int prevVal;
 
 void setup() 
@@ -28,13 +28,18 @@ void loop()
 {
     mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 
-    val = map(ay, -17000, 17000, 0, 179);
-    if (val != prevVal)
+    Serial.print("ay unfiltered: ");
+    Serial.println(ay);
+    delay(100);
+
+    yVal = map(ay, -17000, 17000, 0, 179);
+    if (yVal != prevVal)
     {
 //        myservo.write(val);
-        Serial.println(val);
-        prevVal = val;
+        Serial.print("ay FILTERED: ");
+        Serial.println(yVal);
+        prevVal = yVal;
     }
 
-    delay(50);
+    delay(100);
 }
