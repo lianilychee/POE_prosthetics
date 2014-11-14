@@ -1,23 +1,10 @@
-/*
-FlowDart
-This code controls an LED rope dart head with RGB LEDS and an accelerometer. 
-
-Modes:
-  solidColor - 1 color
-  fader - fades smoothly between different colors
-
-  strobe options are avilable on all other options. 
- */
-
 #include <math>
-
 
 //Acclerometer Setup
 #include "I2Cdev.h"
 #include "MPU6050.h"
 
-// Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
-// is used in I2Cdev.h
+// Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation is used in I2Cdev.h
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
     #include "Wire.h"
 #endif
@@ -31,8 +18,6 @@ MPU6050 accelgyro;
 
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
-
-
 
 // uncomment "OUTPUT_READABLE_ACCELGYRO" if you want to see a tab-separated
 // list of the accel X/Y/Z and then gyro X/Y/Z values in decimal. Easy to read,
@@ -104,14 +89,12 @@ void setup(){
 // the loop routine runs over and over again forever:
 void loop() {
   accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-  Serial.println(ax);
-  Serial.println(ay);
-  Serial.println(az);
+  Serial.print(ax);
+  Serial.print("; ");
+  Serial.print(ay);
+  Serial.print("; ");
+  Serial.print(az);
   Serial.println("");
   delay(1000);
-
-
 }
 
-
-// Subfunctions ------------------------------------------------------------------------------------------------------------
