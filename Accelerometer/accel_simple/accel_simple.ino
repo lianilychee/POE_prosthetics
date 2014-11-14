@@ -10,8 +10,10 @@ int16_t gx, gy, gz;
 
 //Servo myservo;
 
-int yVal;
-int prevVal;
+int xVal, yVal, zVal;
+int prevX, prevY, prevZ;
+
+int accelThresh= 4;
 
 void setup() 
 {
@@ -28,17 +30,24 @@ void loop()
 {
     mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 
-    Serial.print("ay unfiltered: ");
-    Serial.println(ay);
-    delay(100);
-
+    xVal = map(ax, -17000, 17000, 0, 179);
     yVal = map(ay, -17000, 17000, 0, 179);
-    if (yVal != prevVal)
+    zVal = map(az, -17000, 17000, 0, 179);
+    
+    if (abs(xVal-prevX)>=accelThresh || abs(yVal-prevY)>=accelThresh || abs(zVal-prevZ)>=accelThresh)
     {
 //        myservo.write(val);
-        Serial.print("ay FILTERED: ");
-        Serial.println(yVal);
-        prevVal = yVal;
+        Serial.print("Moving - "); 
+        Serial.print(xVal);
+        Serial.print(",");
+        Serial.print(yVal);
+        Serial.print(",");
+        Serial.println(zVal);
+        prevX = xVal;
+        prevY = yVal;
+        prevZ = zVal;
+    }else{
+        Serial.println("Still"); 
     }
 
     delay(100);
