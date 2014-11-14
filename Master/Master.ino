@@ -2,13 +2,22 @@
 
 /************LIBRARIES*****************/
 #include <Servo.h> 
-
+#include "Wire.h"
+#include "I2Cdev.h"
+#include "MPU6050.h"
 /************VARIABLES*****************/
 //Variables for control 
 Servo cuffServo;  // create servo object to control a servo 
 Servo gripServo;
 
 //Variables for raw input 
+MPU6050 mpu; // create accelerometer object for raw input
+int16_t ax, ay, az; // raw parameters for accelerometer
+int16_t gx, gy, gz; // raw parameters for gyroscope
+
+//TODO: Re-calibrate for grabbing and when mounted on arm. 
+int accelThresh= 4; // threshold to determine sensitivity of moving vs. not moving for mapped accelerometer values
+
 int fingerpin = 0; //analog pin used for a single finger sensor
 int grip; //This is for the pressure sensors
 int potpin = 1;  // analog pin used to connect the potentiometer
@@ -38,6 +47,9 @@ boolean reelees = 0;
 //Tracking variables
 int looper = 0;
 int lastGrip;
+int xVal, yVal, zVal; // mapped accelerometer values from -17000-17000 to 
+int prevX, prevY, prevZ; //tracking "memory" variable for mapped accelerometer values
+
 
 /************SETUP*****************/ 
 void setup() 
@@ -45,6 +57,10 @@ void setup()
   Serial.begin(9600); // for debugging in terminal
   cuffServo.attach(9);  // attaches the servo on pin 9 to the servo object 
   gripServo.attach(10);
+  
+  Wire.begin();
+  mpu.initialize(); // initialize accelerometer
+  Serial.println(mpu.testConnection() ? "Connected" : "Connection failed");
   
   for (int thisReading=0; thisReading < numReadings; thisReading++){
     gripReadings[thisReading] = 0;
@@ -57,9 +73,16 @@ void setup()
 /************MAIN LOOP*****************/ 
 void loop() 
 { 
+  //get raw data
+  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz); // reads raw accelerometer/ gyroscope values
   grip = analogRead(fingerpin);
   bend = analogRead(potpin);            // reads the value of the potentiometer (value between 0 and 1023) 
   
+  //TODO: Filter/ Smooth accelerometer values before mapping
+    xVal = map(ax, -17000, 17000, -100, 100);
+    yVal = map(ay, -17000, 17000, -100, 100);
+    zVal = map(az, -17000, 17000, -100, 100);
+    
   //Find the rolling average for the sensors (smoothing)
   bendTotal = bendTotal-bendReadings[bendIndex];
   bendReadings[bendIndex] = bend;
@@ -109,11 +132,15 @@ void loop()
     reelees_now();
     Serial.println("release");
   }
+  
+  prevX = xVal;
+  prevY = yVal;
+  prevZ = zVal;
 } 
 /****************RELAX LOOP*************/
 void relax() {
-  //If arm is by our side, relax.  If it moves, its a lift!
-  if (bendAverage < 300) {               
+  //If arm is by our side (accel reads "down"), relax.  If it moves, its a lift!
+  if (bendAverage < 300 && ax < -85) {               
     relaxed = 1;
     gripServo.write(90);                 //'Relaxed' position of somewhat closed
     delay(15);                           // waits for the servo to get there 
@@ -130,7 +157,7 @@ void relax() {
 /**************LIFT LOOP***************/
 void arm_lift() {
   //If arm bent, then lifting forearm.  If we extend, then we're reaching
- if (bendAverage > 300) {
+ if (bendAverage > 300 && ay > 86) {
   lift = 1;
   gripServo.write(0);
  }
@@ -145,7 +172,7 @@ void arm_lift() {
 /***********GRAB LOOP****************/
 void grab() {
   //If we're not maxed out in force, or over our movement range and arm is extended, grip!
-  if (gripAverage < 300 && bendAverage < 400 && looper < 5000) {
+  if (gripAverage < 300 && bendAverage < 400 && looper < 5000 && abs(xVal-prevX)<=accelThresh) {
     grabbing = 1;
     reach = 0;
     cuffServo.write(grip);
