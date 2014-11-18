@@ -37,8 +37,10 @@ void loop()
     if (abs(xVal-prevX)>=accelThresh || abs(yVal-prevY)>=accelThresh || abs(zVal-prevZ)>=accelThresh)
     {
 //        myservo.write(val);
-        Serial.print("Moving"); 
-        Serial.println(xVal);
+        Serial.print("Moving- "); 
+        Serial.print(xVal);
+        Serial.print(", ");
+        Serial.println(yVal);
   
         prevX = xVal;
         prevY = yVal;
