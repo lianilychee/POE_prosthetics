@@ -140,7 +140,8 @@ void loop()
 /****************RELAX LOOP*************/
 void relax() {
   //If arm is by our side (accel reads "down"), relax.  If it moves, its a lift!
-  if (bendAverage < 300 && ax < -85) {               
+  if (bendAverage < 300 && ax < -85) {  
+    Serial.println("Accel- arm down")             
     relaxed = 1;
     gripServo.write(90);                 //'Relaxed' position of somewhat closed
     delay(15);                           // waits for the servo to get there 
@@ -158,6 +159,7 @@ void relax() {
 void arm_lift() {
   //If arm bent, then lifting forearm.  If we extend, then we're reaching
  if (bendAverage > 300 && ay > 86) {
+  Serial.println("Accel- arm lifted");
   lift = 1;
   gripServo.write(0);
  }
@@ -182,6 +184,9 @@ void grab() {
     delay(15);
   }
   else {
+    if(abs(xVal-prevX)<=accelThresh){
+      Serial.println("Accel triggered-- hold")
+    }
     gripServo.write(map(looper, 0, 5000, 0, 179));
     cuffServo.write(lastGrip);
     hold = 1;
