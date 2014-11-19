@@ -1,4 +1,4 @@
-// by Victoria Preston for POE Project ICF Prosthetics
+// by Celine Ta and Victoria Preston for POE Project ICF Prosthetics
 
 /************LIBRARIES*****************/
 #include <Servo.h> 
@@ -165,9 +165,15 @@ void arm_lift() {
   gripServo.write(0);
  }
  else {
-   lift = 0;
-   grabbing = !grabbing;
-   reach = 1;
+   if (yVal < 80) {
+     lift = 0;
+     relaxed = 1;
+   }
+   else {     
+     lift = 0;
+     grabbing = !grabbing;
+     reach = 1;
+   }
  }
   cuffServo.write(0);
   delay(15);
