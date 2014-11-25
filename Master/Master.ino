@@ -153,6 +153,7 @@ void relax() {
     delay(15); 
   }
   cuffServo.write(0);
+  Serial.println("INCREMENTING CUFF SERVO");
   delay(15);
 }
 /**************LIFT LOOP***************/
@@ -185,6 +186,7 @@ void grab() {
     grabbing = 1;
     reach = 0;
     cuffServo.write(grip);
+    Serial.println("INCREMENTING CUFF SERVO");
     gripServo.write(map(looper, 0, 5000, 0, 179));
     looper = looper + 1;
     lastGrip = grip;
@@ -196,6 +198,7 @@ void grab() {
     }
     gripServo.write(map(looper, 0, 5000, 0, 179));
     cuffServo.write(lastGrip);
+    Serial.println("INCREMENTING CUFF SERVO");
     hold = 1;
     grabbing = 0;
     delay(5000); //leave time for user to move to comfortable holding position
@@ -219,6 +222,7 @@ void reelees_now() {
   if (looper > 0) {
     gripServo.write(map(looper, 0, 5000, 0, 179));
     cuffServo.write(lastGrip);
+    Serial.println("INCREMENTING CUFF SERVO");
     lastGrip = grip;
     looper = looper - 1;
     delay(15);
@@ -232,6 +236,7 @@ void reelees_now() {
     grabbing = 0;
     reelees = 0;
     cuffServo.write(lastGrip);
+    Serial.println("INCREMENTING CUFF SERVO");
     gripServo.write(looper);
     Serial.println("reset");
     delay(15);
