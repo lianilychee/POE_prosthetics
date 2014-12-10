@@ -1,4 +1,13 @@
 // by Celine Ta and Victoria Preston for POE Project ICF Prosthetics
+// last updated: December 10, 2014
+/* Reads in sensor data from a potentiometer, accelerometer, and
+three piezoresistive pressure pads.  Smooths potentiometer and pressure
+data, then finds boxcar average. 
+
+Using the sensor data, one of several states is selected, which controls the 
+servos.  The cuff servo sends a proportional distance to the amount of force
+felt by the pressure pads.  The grip servo actuates cable driven fingers.  
+*/
 
 /************LIBRARIES*****************/
 #include <Servo.h> 
@@ -6,26 +15,27 @@
 #include "I2Cdev.h"
 #include "MPU6050.h"
 /************VARIABLES*****************/
-//Variables for control 
-Servo cuffServo;  // create servo object to control a servo 
+//Variables for control of servos 
+Servo cuffServo;  
 Servo gripServo;
 
-//Variables for raw input 
+//Variables for raw input of accelerometer
 MPU6050 mpu; // create accelerometer object for raw input
 int16_t ax, ay, az; // raw parameters for accelerometer
 int16_t gx, gy, gz; // raw parameters for gyroscope
-
 //TODO: Re-calibrate for grabbing and when mounted on arm. 
 int accelThresh= 9; // 4, threshold to determine sensitivity of moving vs. not moving for mapped accelerometer values
 
+//Identifying pins used
 int fingerpin1 = 1; //analog pins used for finger sensors
 int fingerpin2 = 2; 
 int fingerpin3 = 3;
-int grip; //This is for the pressure sensors
 int potpin = 0;  // analog pin used to connect the potentiometer
+
+//Vairables for processing data
+int grip; //This is for the pressure sensors
 int bend;    // This is for the elbow potentiometer 
 
-//Vairables for smoothing
 const int numReadings = 10;
 
 int gripReadings[numReadings];
@@ -57,7 +67,7 @@ int prevX, prevY, prevZ; //tracking "memory" variable for mapped accelerometer v
 void setup() 
 { 
   Serial.begin(9600); // for debugging in terminal
-  cuffServo.attach(9);  // attaches the servo on pin 9 to the servo object 
+  cuffServo.attach(9); 
   gripServo.attach(10);
   
   Wire.begin();
@@ -82,14 +92,14 @@ void loop()
   grip3 = analogRead(fingerpin3);
   grip = max(grip1, grip2);
   grip = max(grip, grip3);
-  bend = analogRead(potpin);            // reads the value of the potentiometer (value between 0 and 1023) 
+  bend = analogRead(potpin);          
   
   //TODO: Filter/ Smooth accelerometer values before mapping
     xVal = map(ax, -17000, 17000, -100, 100);
     yVal = map(ay, -17000, 17000, -100, 100);
     zVal = map(az, -17000, 17000, -100, 100);
     
-  //Find the rolling average for the sensors (smoothing)
+  //Find the rolling average for the sensors potentiometer and fingers (smoothing)
   bendTotal = bendTotal-bendReadings[bendIndex];
   bendReadings[bendIndex] = bend;
   bendTotal = bendTotal + bendReadings[bendIndex];
@@ -113,10 +123,8 @@ void loop()
   
   //Scale the averages to have a sensical input for the servos
   grip = map(gripAverage, 0, 300, 0, 179);     // Grip bounds may need to be adjusted (this is where calibration tests will be useful!) 
-  //cuffServo.write(grip);                  // sets the servo position according to the scaled value 
   
   bend = map(bendAverage, 0, 1023, 0, 179);     // Probably also needs to be adjusted, scale it to use it with the servo (value between 0 and 180) 
-  //gripServo.write(bend);                  // sets the servo position according to the scaled value 
     
   if (relaxed) {
     relax(); 
@@ -155,11 +163,10 @@ void relax() {
   else {
     Serial.println("Accel- arm down");             
     relaxed = 1;
-    gripServo.write(90);                 //'Relaxed' position of somewhat closed
+    gripServo.write(90);                 //'Relaxed hand' position of somewhat closed
     delay(15); 
   }
   cuffServo.write(0);
-  Serial.println("INCREMENTING CUFF SERVO");
   delay(15);
 }
 /**************LIFT LOOP***************/
