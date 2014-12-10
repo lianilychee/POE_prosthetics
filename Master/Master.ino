@@ -18,9 +18,11 @@ int16_t gx, gy, gz; // raw parameters for gyroscope
 //TODO: Re-calibrate for grabbing and when mounted on arm. 
 int accelThresh= 9; // 4, threshold to determine sensitivity of moving vs. not moving for mapped accelerometer values
 
-int fingerpin = 0; //analog pin used for a single finger sensor
+int fingerpin1 = 1; //analog pins used for finger sensors
+int fingerpin2 = 2; 
+int fingerpin3 = 3;
 int grip; //This is for the pressure sensors
-int potpin = 1;  // analog pin used to connect the potentiometer
+int potpin = 0;  // analog pin used to connect the potentiometer
 int bend;    // This is for the elbow potentiometer 
 
 //Vairables for smoothing
@@ -75,7 +77,11 @@ void loop()
 { 
   //get raw data
   mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz); // reads raw accelerometer/ gyroscope values
-  grip = analogRead(fingerpin);
+  grip1 = analogRead(fingerpin1);
+  grip2 = analogRead(fingerpin2);
+  grip3 = analogRead(fingerpin3);
+  grip = max(grip1, grip2);
+  grip = max(grip, grip3);
   bend = analogRead(potpin);            // reads the value of the potentiometer (value between 0 and 1023) 
   
   //TODO: Filter/ Smooth accelerometer values before mapping
