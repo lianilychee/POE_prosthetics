@@ -33,7 +33,8 @@ int fingerpin3 = 3;
 int potpin = 0;  // analog pin used to connect the potentiometer
 
 //Vairables for processing data
-int grip; //This is for the pressure sensors
+int grip; //This is for the max pressure sensor reading
+int grip1, grip2, grip3;
 int bend;    // This is for the elbow potentiometer 
 
 const int numReadings = 10;

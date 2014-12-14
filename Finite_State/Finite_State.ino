@@ -134,11 +134,14 @@ void grab() {
   if (gripAverage < 300 && bendAverage < 150 && looper < 5000) {
     grabbing = 1;
     reach = 0;
-    cuffServo.write(grip);
-    Serial.println("CUFF SERVO GO");
+    if(grip > lastGrip){
+      cuffServo.write(grip);
+      Serial.println("CUFF SERVO GO");
+      lastGrip = grip;
+    }
     gripServo.write(map(looper, 0, 5000, 0, 179));
     looper = looper + 10;
-    lastGrip = grip;
+    
     delay(15);
   }
   else {
@@ -147,7 +150,7 @@ void grab() {
     Serial.println("CUFF SERVO GO");
     hold = 1;
     grabbing = 0;
-//    delay(5000); //leave time for user to move to comfortable holding position
+    //    delay(5000); //leave time for user to move to comfortable holding position
   }
 }
 /**************HOLD LOOP*************/
@@ -168,9 +171,11 @@ void reelees_now() {
   if (looper > 0) {
     gripServo.write(map(looper, 0, 5000, 0, 179));
 //    gripServo.write(looper);
-    cuffServo.write(lastGrip);
-    Serial.println("CUFF SERVO GO");
-    lastGrip = grip;
+    if (grip < lastGrip){
+      cuffServo.write(lastGrip);
+      Serial.println("CUFF SERVO GO");
+      lastGrip = grip;
+    }
     looper = looper - 10;
     delay(15);
   }
