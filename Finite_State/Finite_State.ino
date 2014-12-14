@@ -1,4 +1,4 @@
-// by Victoria Preston for POE Project ICF Prosthetics
+// by Team Redacted for POE Project ICF Prosthetics
 
 /************LIBRARIES*****************/
 #include <Servo.h> 
@@ -9,13 +9,16 @@ Servo cuffServo;  // create servo object to control a servo
 Servo gripServo;
 
 //Variables for raw input 
-int fingerpin = 1; //analog pin used for a single finger sensor
+int fingerpin1 = 1; //analog pin used for a single finger sensor
+int fingerpin2 = 2; 
+int fingerpin3 = 3;
 int grip; //This is for the pressure sensors
+int grip1, grip2, grip3;
 int potpin = 0;  // analog pin used to connect the potentiometer
 int bend;    // This is for the elbow potentiometer 
 
 //Variables for smoothing
-const int numReadings = 10;
+const int numReadings = 15;
 
 int gripReadings[numReadings];
 int gripIndex = 0;
@@ -57,7 +60,11 @@ void setup()
 /************MAIN LOOP*****************/ 
 void loop() 
 { 
-  grip = analogRead(fingerpin);
+  grip1 = analogRead(fingerpin1);
+  grip2 = analogRead(fingerpin2);
+  grip3 = analogRead(fingerpin3);
+  grip = max(grip1, grip2);
+  grip = max(grip, grip3);
   bend = analogRead(potpin);  // reads the value of the potentiometer (value between 0 and 1023) 
   
   //Find the rolling average for the sensors (smoothing)
@@ -83,7 +90,7 @@ void loop()
   //Serial.println(gripAverage);
   
   //Scale the averages to have a sensical input for the servos
-  grip = map(gripAverage, 0, 300, 0, 179);     // Grip bounds may need to be adjusted (this is where calibration tests will be useful!) 
+  grip = map(gripAverage, 0, 30, 0, 179);     // Grip bounds may need to be adjusted (this is where calibration tests will be useful!) 
   //cuffServo.write(grip);                  // sets the servo position according to the scaled value 
   
   bend = map(bendAverage, 0, 1023, 0, 359);     // Probably also needs to be adjusted, scale it to use it with the servo (value between 0 and 180) 
@@ -100,7 +107,7 @@ void relax() {
   //If arm is by our side, relax.  If it moves, its a lift!
   if (bendAverage < 140) {               
     relaxed = 1;
-    gripServo.write(90);                 //'Relaxed' position of somewhat closed
+    gripServo.write(70);                 //'Relaxed' position of somewhat closed
     delay(15);                           // waits for the servo to get there 
   }
   else {
@@ -134,18 +141,15 @@ void grab() {
   if (gripAverage < 300 && bendAverage < 150 && looper < 5000) {
     grabbing = 1;
     reach = 0;
-    if(grip > lastGrip){
-      cuffServo.write(grip);
-      Serial.println("CUFF SERVO GO");
-      lastGrip = grip;
-    }
-    gripServo.write(map(looper, 0, 5000, 0, 179));
+    cuffServo.write(grip);
+    Serial.println("CUFF SERVO GO");
+    gripServo.write(map(looper, 0, 5000, 0, 130));
     looper = looper + 10;
     
     delay(15);
   }
   else {
-    gripServo.write(map(looper-1, 0, 5000, 0, 179));
+    gripServo.write(map(looper-1, 0, 5000, 0, 130));
     cuffServo.write(lastGrip);
     Serial.println("CUFF SERVO GO");
     hold = 1;
@@ -169,18 +173,17 @@ void hold_stuff() {
 void reelees_now() {
   //when releasing, release down to 0.  Then reset.
   if (looper > 0) {
-    gripServo.write(map(looper, 0, 5000, 0, 179));
+    gripServo.write(map(looper, 0, 5000, 0, 130));
 //    gripServo.write(looper);
-    if (grip < lastGrip){
-      cuffServo.write(lastGrip);
-      Serial.println("CUFF SERVO GO");
-      lastGrip = grip;
-    }
+    cuffServo.write(lastGrip);
+    lastGrip = grip;
+    Serial.println("CUFF SERVO GO");
     looper = looper - 10;
     delay(15);
   }
   else {
     relaxed = 1;
+    lastGrip = 0;
     hold = 0;
     reach = 0;
     lastGrip = 0;
