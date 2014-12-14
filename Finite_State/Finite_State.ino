@@ -9,12 +9,12 @@ Servo cuffServo;  // create servo object to control a servo
 Servo gripServo;
 
 //Variables for raw input 
-int fingerpin = 0; //analog pin used for a single finger sensor
+int fingerpin = 1; //analog pin used for a single finger sensor
 int grip; //This is for the pressure sensors
-int potpin = 1;  // analog pin used to connect the potentiometer
+int potpin = 0;  // analog pin used to connect the potentiometer
 int bend;    // This is for the elbow potentiometer 
 
-//Vairables for smoothing
+//Variables for smoothing
 const int numReadings = 10;
 
 int gripReadings[numReadings];
@@ -58,7 +58,7 @@ void setup()
 void loop() 
 { 
   grip = analogRead(fingerpin);
-  bend = analogRead(potpin);            // reads the value of the potentiometer (value between 0 and 1023) 
+  bend = analogRead(potpin);  // reads the value of the potentiometer (value between 0 and 1023) 
   
   //Find the rolling average for the sensors (smoothing)
   bendTotal = bendTotal-bendReadings[bendIndex];
@@ -89,31 +89,16 @@ void loop()
   bend = map(bendAverage, 0, 1023, 0, 359);     // Probably also needs to be adjusted, scale it to use it with the servo (value between 0 and 180) 
   //gripServo.write(bend);                  // sets the servo position according to the scaled value 
     
-  if (relaxed) {
-    relax(); 
-    Serial.println("relaxed");
-  }
-  else if (lift) {
-    arm_lift();
-    Serial.println("lift");
-  }
-  else if (grabbing) {
-    grab();
-    Serial.println("grab");
-  }
-  else if (hold) {
-    hold_stuff();
-    Serial.println("hold");
-  }
-  else if (reelees) {
-    reelees_now();
-    Serial.println("release");
-  }
+  if (relaxed) { relax(); Serial.println("relaxed"); }
+  else if (lift) { arm_lift(); Serial.println("lift"); }
+  else if (grabbing) { grab(); Serial.println("grab"); }
+  else if (hold) { hold_stuff(); Serial.println("hold"); }
+  else if (reelees) { reelees_now(); Serial.println("release"); }
 } 
 /****************RELAX LOOP*************/
 void relax() {
   //If arm is by our side, relax.  If it moves, its a lift!
-  if (bendAverage < 50) {               
+  if (bendAverage < 140) {               
     relaxed = 1;
     gripServo.write(90);                 //'Relaxed' position of somewhat closed
     delay(15);                           // waits for the servo to get there 
@@ -131,7 +116,7 @@ void relax() {
 /**************LIFT LOOP***************/
 void arm_lift() {
   //If arm bent, then lifting forearm.  If we extend, then we're reaching
- if (bendAverage > 50) {
+ if (bendAverage > 140) {
   lift = 1;
   gripServo.write(0);
  }
@@ -146,7 +131,7 @@ void arm_lift() {
 /***********GRAB LOOP****************/
 void grab() {
   //If we're not maxed out in force, or over our movement range and arm is extended, grip!
-  if (gripAverage < 300 && bendAverage < 60 && looper < 5000) {
+  if (gripAverage < 300 && bendAverage < 150 && looper < 5000) {
     grabbing = 1;
     reach = 0;
     cuffServo.write(grip);
@@ -157,7 +142,7 @@ void grab() {
     delay(15);
   }
   else {
-    gripServo.write(map(looper-1, 0, 1000, 0, 179));
+    gripServo.write(map(looper-1, 0, 5000, 0, 179));
     cuffServo.write(lastGrip);
     Serial.println("CUFF SERVO GO");
     hold = 1;
@@ -168,7 +153,7 @@ void grab() {
 /**************HOLD LOOP*************/
 void hold_stuff() {
   //if extend, we're releasing
-  if (bendAverage > 50) {
+  if (bendAverage > 140) {
     reelees = 0;
     hold = 1;
   }
