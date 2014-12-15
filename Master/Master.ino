@@ -37,7 +37,7 @@ int grip; //This is for the max pressure sensor reading
 int grip1, grip2, grip3;
 int bend;    // This is for the elbow potentiometer 
 
-const int numReadings = 20;
+const int numReadings = 30;
 
 int gripReadings[numReadings];
 int gripIndex = 0;
@@ -199,18 +199,18 @@ if (bendAverage > 140 && yVal> 80) { //90 is straight parallel to floor, 80 for 
 /***********GRAB LOOP****************/
 void grab() {
   //If we're not maxed out in force, or over our movement range and arm is extended, grip!
-  if (gripAverage < 300 && bendAverage < 150 && looper < 5000) {
+  if (gripAverage < 300 && bendAverage < 150 && looper < 5000) { //gripAverage < 300 as a safety for the objects being picked up. 
     grabbing = 1;
     reach = 0;
     cuffServo.write(grip);
     Serial.println("INCREMENTING CUFF SERVO Actuate");
-    gripServo.write(map(looper, 0, 5000, 0, 130));
+    gripServo.write(map(looper, 0, 5000, 0, 115));
     looper = looper + 15;
     lastGrip = grip;
     delay(15);
   }
   else {
-    gripServo.write(map(looper, 0, 5000, 0, 130));
+    gripServo.write(map(looper, 0, 5000, 0, 115));
     cuffServo.write(lastGrip);
     Serial.println("WRITING CUFF SERVO Hold");
     hold = 1;
@@ -234,7 +234,7 @@ void hold_stuff() {
 void reelees_now() {
   //when releasing, release down to 0.  Then reset.
   if (looper > 0) {
-    gripServo.write(map(looper, 0, 5000, 0, 130));
+    gripServo.write(map(looper, 0, 5000, 0, 115));
     cuffServo.write(lastGrip);
     Serial.println("INCREMENTING CUFF SERVO");
     lastGrip = grip;
