@@ -205,7 +205,7 @@ void grab() {
     cuffServo.write(grip);
     Serial.println("INCREMENTING CUFF SERVO Actuate");
     gripServo.write(map(looper, 0, 5000, 0, 130));
-    looper = looper + 10;
+    looper = looper + 15;
     lastGrip = grip;
     delay(15);
   }
@@ -238,7 +238,7 @@ void reelees_now() {
     cuffServo.write(lastGrip);
     Serial.println("INCREMENTING CUFF SERVO");
     lastGrip = grip;
-    looper = looper - 10;
+    looper = looper - 15;
     delay(15);
   }
   else {
