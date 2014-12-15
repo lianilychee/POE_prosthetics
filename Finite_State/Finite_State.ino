@@ -18,7 +18,7 @@ int potpin = 0;  // analog pin used to connect the potentiometer
 int bend;    // This is for the elbow potentiometer 
 
 //Variables for smoothing
-const int numReadings = 15;
+const int numReadings = 20;
 
 int gripReadings[numReadings];
 int gripIndex = 0;
